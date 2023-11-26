@@ -5,28 +5,31 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    /* -------------- 기능 변수 -------------- */
     public float Speed;
     
     public GameObject[] weapons;
     public bool[] hasWeapons;
    
     public GameObject[] grenades;
-    public int hasGrenades;
+
     public GameObject grnadeObj;
     public GameManager manager;
 
     public AudioSource jumpSound;
-    
+    /* -------------- 인스펙터 -------------- */
     public int ammo;
     public int coin;
     public int health;
     public int score;
+    public int hasGrenades;
     public int max_ammo;
     public int max_coin;
     public int max_health;
     public int max_hasGrenades;
     public Camera followCamera;
-    
+
+    /* -------------- 기능 변수 -------------- */
     float h;
     float v;
     
@@ -50,7 +53,8 @@ public class Player : MonoBehaviour
     bool isReload;
     bool isShop;
     bool isDead;
-    
+
+    /* -------------- 컴퍼넌트 변수 -------------- */
     Vector3 moveVec;
     Vector3 dodgeVec; // 회피시 방향에 대한 변수
 
@@ -58,34 +62,12 @@ public class Player : MonoBehaviour
     Animator _animator;
     Rigidbody _rigidbody;
     GameObject nearObject;
+
     public Weapon equipWeapon;
     int equipWeaponIndex = -1;
     float fireDelay;
-    
 
-    void Awake()
-    {
-        _animator = GetComponentInChildren<Animator>();
-        _rigidbody = GetComponent<Rigidbody>();
-        _meshs = GetComponentsInChildren<MeshRenderer>();
-    }
-
-    void Update()
-    {
-        GetInput();
-        Move();
-        Turn();
-        Jump();
-        Grenade();
-        Attack();
-        Reload();
-        Dodge();
-        Swap();
-        Interaction();
-
-    }
-
-    // 인풋관련
+    /* -------------- 기능 함수 -------------- */
     void GetInput()
     {
         h = Input.GetAxisRaw("Horizontal");
@@ -310,7 +292,7 @@ public class Player : MonoBehaviour
             
         }
     }
-
+    /* -------------- 이벤트 함수 -------------- */
     void FreezeRotation()
     {
         _rigidbody.angularVelocity = Vector3.zero;
@@ -433,19 +415,28 @@ public class Player : MonoBehaviour
         }
     }
 
-    void OnTriggerExit(Collider other)
+
+    void Awake()
     {
-        if (other.tag == "Weapon")
-        {
-            nearObject = null;
-        }
-        else if (other.tag == "Shop")
-        {
-            Shop shop = nearObject.GetComponent<Shop>();
-            shop.Exit();
-            isShop = false;
-            nearObject = null;
-        }
-         
+        _animator = GetComponentInChildren<Animator>();
+        _rigidbody = GetComponent<Rigidbody>();
+        _meshs = GetComponentsInChildren<MeshRenderer>();
     }
+
+    void Update()
+    {
+        GetInput();
+        Move();
+        Turn();
+        Jump();
+        Grenade();
+        Attack();
+        Reload();
+        Dodge();
+        Swap();
+        Interaction();
+
+    }
+
 }
+

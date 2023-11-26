@@ -5,8 +5,10 @@ using UnityEngine.AI;
 
 public class BossMissile : Bullet // 자식 : 부모
 {
+
     public Transform target;
     NavMeshAgent _nav;
+
     void Awake()
     {
         _nav = GetComponent<NavMeshAgent>();

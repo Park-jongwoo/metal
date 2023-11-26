@@ -4,10 +4,13 @@ using UnityEngine;
 
 public class Grenade : MonoBehaviour
 {
+    /* -------------- 프로퍼티 -------------- */
     public GameObject meshObj;
     public GameObject effectObj;
     public Rigidbody _rigidbody;
-    
+
+
+    /* -------------- 기능 함수 -------------- */
     void Start()
     {
         StartCoroutine(Explosion());

@@ -18,9 +18,12 @@ public class Item : MonoBehaviour
     Rigidbody _rigidbody;
     SphereCollider _sphereCollider;
 
+    /* -------------- 프로퍼티 -------------- */
     public Type type;
     public int value;
 
+
+    /* -------------- 이벤트 함수 -------------- */
     void Awake()
     {
         _rigidbody = GetComponent<Rigidbody>();

@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class Shop : MonoBehaviour
 {
+
+    /* -------------- 프로퍼티 -------------- */
     public RectTransform uiGroup;
     public Animator _animation;
 
@@ -16,6 +18,7 @@ public class Shop : MonoBehaviour
 
     Player enterPlayer;
 
+    /* -------------- 이벤트 함수 -------------- */
     public void Enter(Player player) // 존에 들어 갈 때 
     {
         enterPlayer = player;

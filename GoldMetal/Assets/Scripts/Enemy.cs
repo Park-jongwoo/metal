@@ -15,6 +15,7 @@ public class Enemy : MonoBehaviour
         D
     };
 
+    /* -------------- enemy 프로퍼티 -------------- */
     public Type enemyType;
     public int maxHealth;
     public int curHealth;
@@ -28,14 +29,16 @@ public class Enemy : MonoBehaviour
     public GameObject[] coins;
     public bool isFirstC;
     public bool isDead;
-    
+
+    /* -------------- 컴퍼넌트 변수 -------------- */
     public Rigidbody _rigidbody;
     public BoxCollider _boxCollider;
     public MeshRenderer[] _meshs;
     public NavMeshAgent _nav;
     public Animator _animator;
-    
-    
+
+
+    /* -------------- 이벤트 함수 -------------- */
     void Awake()
     {
         _rigidbody = GetComponent<Rigidbody>();
@@ -53,23 +56,6 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    void ChaseStart()
-    {
-        
-        if (enemyType != Type.C)
-        {
-            Walking();
-        }
-        else
-        {
-            Invoke("Walking", 2);
-        }
-    }
-    void Walking()
-    {        
-        isChase = true;
-        _animator.SetBool("isWalk", true);
-    }
     void Update()
     {
         if (_nav.enabled && enemyType != Type.D)
@@ -78,12 +64,40 @@ public class Enemy : MonoBehaviour
             _nav.isStopped = !isChase;
         }
     }
+
+    void FixedUpdate()
+    {
+        FreezeVelocity();
+        Targeting();
+    }
+   
+    /* -------------- 기능 함수 -------------- */
     void FreezeVelocity()
     {
         if (isChase)
         {
             _rigidbody.velocity = Vector3.zero;
             _rigidbody.angularVelocity = Vector3.zero;
+        }
+    }
+
+
+    void Walking()
+    {
+        isChase = true;
+        _animator.SetBool("isWalk", true);
+    }
+
+    void ChaseStart()
+    {
+
+        if (enemyType != Type.C)
+        {
+            Walking();
+        }
+        else
+        {
+            Invoke("Walking", 2);
         }
     }
 
@@ -110,7 +124,7 @@ public class Enemy : MonoBehaviour
                     break;
             }
 
-            RaycastHit[] rayHits = //플레이어를 추적하는 도중 공격범위에 플레이어를 포착했다~
+            RaycastHit[] rayHits = //플레이어를 추적하는 도중 공격범위에 플레이어를 포착
                 Physics.SphereCastAll(transform.position, targetRadius,
                     transform.forward, targetRange, LayerMask.GetMask("Player"));
 
@@ -164,13 +178,7 @@ public class Enemy : MonoBehaviour
         _animator.SetBool("isAttack", false); // 공격애니메이션 끄기
     }
     
-    void FixedUpdate()
-    {
-        FreezeVelocity();
-        Targeting();
-    }
-
-    
+    /* -------------- 피격관련 -------------- */
     void OnTriggerEnter(Collider other)
     {
         if (other.tag == "Melee")
@@ -191,6 +199,7 @@ public class Enemy : MonoBehaviour
 
         }
     }
+
 
     public void HitByGrenade(Vector3 explosionPos)
     {

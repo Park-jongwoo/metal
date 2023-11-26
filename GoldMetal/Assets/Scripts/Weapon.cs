@@ -9,13 +9,15 @@ public class Weapon : MonoBehaviour
     {
         Melee, Range
     }
+    /* -------------- 프로퍼티 -------------- */
     public Type type;
     
     public int damage;
     public float rate;
     public int maxAmmo;
     public int curAmmo;
-    
+
+    /* -------------- 기능 변수 -------------- */
     public BoxCollider meleeArea;
     public TrailRenderer trailEffect;
     
@@ -24,9 +26,9 @@ public class Weapon : MonoBehaviour
 
     public Transform bulletCasePos; // 탄피 나오는 위치
     public GameObject bulletCase; // 탄피
-    
-    
-    
+
+
+    /* -------------- 기능 함수 -------------- */
     public void Use()
     {
         if (type == Type.Melee)

@@ -5,19 +5,23 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 public class Boss : Enemy
 {
+
+   /* --------------  프로퍼티 -------------- */
    public GameObject missile;
    public Transform missilePortA;
    public Transform missilePortB;
 
+/* -------------- enemy 프로퍼티 -------------- */
    // 플레이어 이동 예측
    Vector3 lookVec;
    // 어디에 내려 찍을지 저장하는 변수
    Vector3 tauntVec;
-   // 플레이어 바라보는 플래스
-   public bool isLook;
+   
+   public bool isLook; // 플레이어 바라보는 플래스
 
-   void Awake() // Awake() 함수는 자식 스크립트만 단독 실행한다.
-   {
+    /* -------------- 이벤트 함수 -------------- */
+    void Awake() 
+    {
       _rigidbody = GetComponent<Rigidbody>();
       _boxCollider = GetComponent<BoxCollider>();
       _meshs = GetComponentsInChildren<MeshRenderer>();
@@ -25,10 +29,10 @@ public class Boss : Enemy
       _animator = GetComponentInChildren<Animator>();
       _nav.isStopped = true;
       StartCoroutine("Think");
-   }
+    }
 
-   void Update()
-   {
+    void Update()
+    {
       if (isDead)
       {
          StopAllCoroutines(); // 모든 코루틴 멈추기
@@ -47,10 +51,11 @@ public class Boss : Enemy
       {
          _nav.SetDestination(tauntVec); // 점프공격 할 때 목표지점으로 이동하도록 로직 추가
       }
-   }
+    }
 
-   IEnumerator Think()
-   {
+    /* -------------- 기능 함수 -------------- */
+    IEnumerator Think()
+    {
       yield return new WaitForSeconds(0.1f); // 보스 패턴 난이도
 
       int ranAction = Random.Range(0, 5);
@@ -72,10 +77,10 @@ public class Boss : Enemy
             break;
          
       }
-   }
+    }
 
-   IEnumerator MissileShot()
-   {
+    IEnumerator MissileShot()
+    {
       
       _animator.SetTrigger("doShot");
       yield return new WaitForSeconds(0.2f);
@@ -90,18 +95,18 @@ public class Boss : Enemy
 
       yield return new WaitForSeconds(2f);
       StartCoroutine("Think");
-   }
-   IEnumerator RockShot()
-   {
+    }
+    IEnumerator RockShot()
+    {
       isLook = false; // 돌 만드는 동안 시선 멈추기
       _animator.SetTrigger("doBigShot");
       Instantiate(bullet, transform.position, transform.rotation);
       yield return new WaitForSeconds(3f);
       isLook = true;
       StartCoroutine("Think");
-   }
-   IEnumerator Taunt()
-   {
+    }
+    IEnumerator Taunt()
+    {
       tauntVec = target.position + lookVec;
       isLook = false;
       _boxCollider.enabled = false; // 점프하는 도중에 플레이어 밀지 않도록 하기위해
@@ -119,6 +124,6 @@ public class Boss : Enemy
       _boxCollider.enabled = true;
       _nav.isStopped = true;
       StartCoroutine("Think");
-   }
+    }
    
 }

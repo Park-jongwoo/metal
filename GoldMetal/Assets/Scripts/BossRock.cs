@@ -4,12 +4,14 @@ using UnityEngine;
 
 public class BossRock : Bullet
 {
-    Rigidbody _rigidbody;
+    /* -------------- 컴퍼넌트 변수 -------------- */
     float angularPower = 2;
     float scaleValue = 0.1f;
     bool isShoot;
-    
-    // Start is called before the first frame update
+
+    Rigidbody _rigidbody;
+
+    /* -------------- 이벤트 함수 -------------- */
     void Awake()
     {
         _rigidbody = GetComponent<Rigidbody>();
@@ -17,7 +19,7 @@ public class BossRock : Bullet
         StartCoroutine(GainPower());
         
     }
-
+    /* -------------- 기능 함수 -------------- */
     IEnumerator GainPowerTimer()
     {
         yield return new WaitForSeconds(2.2f);
