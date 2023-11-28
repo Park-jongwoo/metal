@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
-using Random = System.Random;
+using Random = UnityEngine.Random;
 
 public class Enemy : MonoBehaviour
 {
@@ -38,6 +38,11 @@ public class Enemy : MonoBehaviour
     public Animator _animator;
 
 
+    bool isWandering = false;
+    
+    public float wanderRadius = 10f;
+
+
     /* -------------- 이벤트 함수 -------------- */
     void Awake()
     {
@@ -58,10 +63,21 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
-        if (_nav.enabled && enemyType != Type.D)
+        if(_nav.enabled && enemyType != Type.D)
         {
-            _nav.SetDestination(target.position);
-            _nav.isStopped = !isChase;
+            if (isChase)
+            {
+                _nav.SetDestination(target.position);
+                _nav.isStopped = !isChase;
+            }
+            else
+            {
+                // 어그로 상태가 아니라면 랜덤하게 배회
+                if (!isWandering)
+                {
+                    StartCoroutine(Wander());
+                }
+            }
         }
     }
 
@@ -99,6 +115,46 @@ public class Enemy : MonoBehaviour
         {
             Invoke("Walking", 2);
         }
+    }
+
+    Vector3 RandomNavSphere(Vector3 origin, float distance, int layermask)
+    {
+        Vector3 randomDirection = Random.insideUnitSphere * distance;
+
+        randomDirection += origin;
+
+        NavMeshHit navHit;
+
+        NavMesh.SamplePosition(randomDirection, out navHit, distance, layermask);
+
+        return navHit.position;
+    }
+
+    IEnumerator Wander()
+    {
+        isWandering = true;
+        Vector3 newPosition = RandomNavSphere(transform.position, wanderRadius, -1);
+
+        // 어그로 상태가 아닐 때 랜덤한 위치로 이동
+        _nav.SetDestination(newPosition);
+
+        yield return new WaitForSeconds(1f); // 배회 시간 (조절 가능)
+
+        isWandering = false;
+    }
+
+    public void SetTarget(Transform newTarget)
+    {
+        target = newTarget;
+        isChase = true;
+        _animator.SetBool("isWalk", true);
+    }
+
+    public void ClearTarget()
+    {
+        target = null;
+        isChase = false;
+        _animator.SetBool("isWalk", false);
     }
 
     void Targeting()
