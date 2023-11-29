@@ -38,9 +38,14 @@ public class Enemy : MonoBehaviour
     public Animator _animator;
 
 
+
+    /* -------------- 에너미 이동변수 -------------- */
     bool isWandering = false;
-    
     public float wanderRadius = 10f;
+    private bool isAggro = false;
+
+    
+    private GameObject aggroPulling;
 
 
     /* -------------- 이벤트 함수 -------------- */
@@ -90,33 +95,36 @@ public class Enemy : MonoBehaviour
     /* -------------- 기능 함수 -------------- */
     void FreezeVelocity()
     {
-        if (isChase)
+        if (_nav.enabled && enemyType != Type.D)
         {
-            _rigidbody.velocity = Vector3.zero;
-            _rigidbody.angularVelocity = Vector3.zero;
+            if (isChase)
+            {
+                _nav.SetDestination(target.position);
+                _nav.isStopped = !isChase;
+
+                _rigidbody.velocity = Vector3.zero;
+                _rigidbody.angularVelocity = Vector3.zero;
+            }
+            else
+            {
+                // 어그로 상태가 아니라면 랜덤하게 배회
+                if (!isWandering)
+                {
+                    StartCoroutine(Wander());
+                }
+            }
         }
     }
 
 
-    void Walking()
+    IEnumerator ChaseStart()
     {
+        yield return new WaitForSeconds(0.8f);
         isChase = true;
         _animator.SetBool("isWalk", true);
     }
 
-    void ChaseStart()
-    {
-
-        if (enemyType != Type.C)
-        {
-            Walking();
-        }
-        else
-        {
-            Invoke("Walking", 2);
-        }
-    }
-
+    /* -------------- 에너미 랜덤이동  -------------- */
     Vector3 RandomNavSphere(Vector3 origin, float distance, int layermask)
     {
         Vector3 randomDirection = Random.insideUnitSphere * distance;
@@ -142,19 +150,28 @@ public class Enemy : MonoBehaviour
 
         isWandering = false;
     }
-
+    /* -------------- 타겟팅 변수 -------------- */
     public void SetTarget(Transform newTarget)
     {
         target = newTarget;
         isChase = true;
         _animator.SetBool("isWalk", true);
+        StartCoroutine(ChaseStart());
     }
 
-    public void ClearTarget()
+    void ClearTarget()
     {
-        target = null;
-        isChase = false;
+        
         _animator.SetBool("isWalk", false);
+        _animator.SetBool("isAttack", false);
+
+        SetIsNavEnabled(false);
+        if (isAggro)
+        {
+            aggroPulling.SetActive(true);
+        }
+
+        isAggro = false;
     }
 
     void Targeting()
@@ -326,5 +343,11 @@ public class Enemy : MonoBehaviour
             }
             Destroy(gameObject, 4);
         }
+    }
+    // --------------------------- 외부 참조 함수 ------------------------
+    public void SetIsNavEnabled(bool bol)
+    {
+        isChase = bol;
+        _nav.enabled = bol;
     }
 }

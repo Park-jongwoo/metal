@@ -5,17 +5,17 @@ using UnityEngine;
 public class AggroPulling : MonoBehaviour
 {
     public float aggroRange = 10f; // 인스펙터에서 조절할 수 있는 어그로 범위
-    private bool isAggroed = false; // 어그로 상태를 나타내는 플래그
+    internal bool isAggro = false; // 어그로 상태를 나타내는 플래그
 
-    private void OnTriggerEnter(Collider other)
+    void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
             float distance = Vector3.Distance(transform.position, other.transform.position);
 
-            if (distance < aggroRange && !isAggroed)
+            if (distance < aggroRange && !isAggro)
             {
-                isAggroed = true;
+                isAggro = true;
                 Enemy enemy = GetComponentInParent<Enemy>();
 
                 if (enemy != null)
