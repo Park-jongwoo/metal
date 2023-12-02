@@ -54,7 +54,7 @@ public class Player : MonoBehaviour
     bool isShop;
     bool isDead;
 
-    /* -------------- 컴퍼넌트 변수 -------------- */
+    /* --------------  변수 -------------- */
     Vector3 moveVec;
     Vector3 dodgeVec; // 회피시 방향에 대한 변수
 
@@ -129,12 +129,15 @@ public class Player : MonoBehaviour
     {
         if (jDown && moveVec == Vector3.zero && !isJump && !isDodge && !isSwap && !isDead)
         {
-            _rigidbody.AddForce(Vector3.up * 15, ForceMode.Impulse); // 즉발적인 힘은 Impulse
+            if (jumpSound != null)  // Null 체크 추가
+            {
+                jumpSound.Play();
+            }
+
+            _rigidbody.AddForce(Vector3.up * 15, ForceMode.Impulse);
             isJump = true;
             _animator.SetBool("isJump", true);
             _animator.SetTrigger("doJump");
-
-            jumpSound.Play();
         }
     }
 

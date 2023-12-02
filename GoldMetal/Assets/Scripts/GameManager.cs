@@ -64,6 +64,8 @@ public class GameManager : MonoBehaviour
         
         if(PlayerPrefs.HasKey("MaxScore"))
             PlayerPrefs.SetInt("MaxScore", 0);
+        
+
     }
 
     public void GameStart()

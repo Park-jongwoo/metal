@@ -55123,8 +55123,8 @@ MonoBehaviour:
   manager: {fileID: 1876000426}
   jumpSound: {fileID: 0}
   ammo: 999
-  coin: 5500
-  health: 10
+  coin: 10000
+  health: 100
   score: 0
   hasGrenades: 0
   max_ammo: 999

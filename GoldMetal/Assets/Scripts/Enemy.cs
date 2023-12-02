@@ -1,6 +1,4 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using Random = UnityEngine.Random;
@@ -15,85 +13,48 @@ public class Enemy : MonoBehaviour
         D
     };
 
-    /* -------------- enemy 프로퍼티 -------------- */
+    /* -------------- 에너미 변수 -------------- */
     public Type enemyType;
     public int maxHealth;
     public int curHealth;
     public int score;
     public GameManager manager;
-    public Transform target;
+    internal Transform target;
     public bool isChase;
-    public BoxCollider _meleeArea;
+    public BoxCollider meleeArea;
     public bool isAttack;
     public GameObject bullet;
     public GameObject[] coins;
     public bool isFirstC;
     public bool isDead;
 
-    /* -------------- 컴퍼넌트 변수 -------------- */
-    public Rigidbody _rigidbody;
-    public BoxCollider _boxCollider;
-    public MeshRenderer[] _meshs;
-    public NavMeshAgent _nav;
-    public Animator _animator;
-
-
-
-    /* -------------- 에너미 이동변수 -------------- */
-    bool isWandering = false;
+    /* -------------- 선언 변수??? -------------- */
+    internal Rigidbody _rigidbody;
+    internal BoxCollider _boxCollider;
+    internal MeshRenderer[] _meshRenderers;
+    internal NavMeshAgent _nav;
+    internal Animator _animator;
+    public float aggroRange = 10f;
+    /* -------------- 이동관련변수 -------------- */
+    private bool _isWandering = false;
     public float wanderRadius = 10f;
-    private bool isAggro = false;
 
-    
-    private GameObject aggroPulling;
+    private bool _isAggro = false;
+    private AggroPulling _aggroPulling;
 
-
-    /* -------------- 이벤트 함수 -------------- */
+    /* ------------------ 이벤트------------------ */
     void Awake()
     {
         _rigidbody = GetComponent<Rigidbody>();
         _boxCollider = GetComponent<BoxCollider>();
-        _meshs = GetComponentsInChildren<MeshRenderer>();
+        _meshRenderers = GetComponentsInChildren<MeshRenderer>();
         _nav = GetComponent<NavMeshAgent>();
         _animator = GetComponentInChildren<Animator>();
+        _aggroPulling = GetComponentInChildren<AggroPulling>();
 
-        if (enemyType != Type.D)
-        {
-            if (enemyType != Type.C)
-                ChaseStart();
-            else
-                Invoke("ChaseStart", 2);
-        }
     }
 
     void Update()
-    {
-        if(_nav.enabled && enemyType != Type.D)
-        {
-            if (isChase)
-            {
-                _nav.SetDestination(target.position);
-                _nav.isStopped = !isChase;
-            }
-            else
-            {
-                // 어그로 상태가 아니라면 랜덤하게 배회
-                if (!isWandering)
-                {
-                    StartCoroutine(Wander());
-                }
-            }
-        }
-    }
-
-    void FixedUpdate()
-    {
-        FreezeVelocity();
-        Targeting();
-    }
-   
-    /* -------------- 기능 함수 -------------- */
-    void FreezeVelocity()
     {
         if (_nav.enabled && enemyType != Type.D)
         {
@@ -104,31 +65,56 @@ public class Enemy : MonoBehaviour
 
                 _rigidbody.velocity = Vector3.zero;
                 _rigidbody.angularVelocity = Vector3.zero;
+
+
+                // 플레이어와의 거리를 체크하여 일정 거리 이상 멀어지면 배회 시작
+                float distanceToPlayer = Vector3.Distance(transform.position, target.position);
+                if (distanceToPlayer > aggroRange)
+                {
+                    isChase = false;
+                    isAttack = false;
+                    _animator.SetBool("isAttack", false);
+                    StartCoroutine(Wander());
+                }
             }
             else
             {
-                // 어그로 상태가 아니라면 랜덤하게 배회
-                if (!isWandering)
-                {
+                if (!_isWandering && !_isAggro)
                     StartCoroutine(Wander());
-                }
             }
         }
     }
 
+    void FixedUpdate()
+    {
+        FreezeVelocity();
+        Targeting();
+
+        
+    }
+
+    /* --------------- 기능 함수 --------------- */
+    void FreezeVelocity()
+    {
+        
+    }
 
     IEnumerator ChaseStart()
     {
+        Debug.Log("ChaseStart called");
         yield return new WaitForSeconds(0.8f);
         isChase = true;
         _animator.SetBool("isWalk", true);
     }
-
-    /* -------------- 에너미 랜덤이동  -------------- */
+    IEnumerator DelayedChaseStart(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        StartCoroutine("ChaseStart");
+    }
+    /* -------------- 배회하는 변수 -------------- */
     Vector3 RandomNavSphere(Vector3 origin, float distance, int layermask)
     {
         Vector3 randomDirection = Random.insideUnitSphere * distance;
-
         randomDirection += origin;
 
         NavMeshHit navHit;
@@ -140,46 +126,80 @@ public class Enemy : MonoBehaviour
 
     IEnumerator Wander()
     {
-        isWandering = true;
-        Vector3 newPosition = RandomNavSphere(transform.position, wanderRadius, -1);
+        Debug.Log("Wander Start");
+        _isWandering = true;
 
-        // 어그로 상태가 아닐 때 랜덤한 위치로 이동
-        _nav.SetDestination(newPosition);
+        while (!_isAggro)
+        {
+            // 플레이어를 감지하는 로직 추가
+            Collider[] colliders = Physics.OverlapSphere(transform.position, aggroRange, LayerMask.GetMask("Player"));
+            if (colliders.Length > 0)
+            {
+                Transform playerTransform = colliders[0].transform;
 
-        yield return new WaitForSeconds(1f); // 배회 시간 (조절 가능)
+                // 배회 중 어그로가 없을 때 플레이어를 탐지하면 어그로 설정
+                _aggroPulling.gameObject.SetActive(true);
+                _aggroPulling.isAggro = true;
+                _aggroPulling.SetTarget(playerTransform);
 
-        isWandering = false;
+                // 배회 중 어그로가 없을 때 플레이어를 탐지하면 바로 공격
+                Enemy enemy = GetComponent<Enemy>();
+                if (enemy != null)
+                {
+                    yield return new WaitForSeconds(2f);
+                    enemy.SetTarget(playerTransform);
+                    StartCoroutine("ChaseStart");
+                    
+                }
+
+                break; // 어그로가 설정되면 루프 종료
+            }
+
+            Vector3 newPosition = RandomNavSphere(transform.position, wanderRadius, -1);
+            _nav.SetDestination(newPosition);
+            _animator.SetBool("isWalk", true);
+
+            yield return new WaitForSeconds(2f);
+        }
+
+        _isWandering = false;
     }
-    /* -------------- 타겟팅 변수 -------------- */
+
+    /* -------------- 타겟 지정변수 -------------- */
     public void SetTarget(Transform newTarget)
     {
+        Debug.Log("SetTarget called");
         target = newTarget;
         isChase = true;
         _animator.SetBool("isWalk", true);
-        StartCoroutine(ChaseStart());
+        StartCoroutine("ChaseStart");
     }
+
 
     void ClearTarget()
     {
-        
         _animator.SetBool("isWalk", false);
         _animator.SetBool("isAttack", false);
 
         SetIsNavEnabled(false);
-        if (isAggro)
-        {
-            aggroPulling.SetActive(true);
-        }
 
-        isAggro = false;
+        if (_isAggro && _aggroPulling != null) // 어그로 풀링이 존재하는 경우에만 처리
+            _aggroPulling.gameObject.SetActive(true);
+
+        _isAggro = false;
+
+        // 어그로가 없는 경우에만 배회
+        if (!_isAggro)
+            StartCoroutine(Wander());
     }
 
+    /* -------------- 공격관련 변수 -------------- */
     void Targeting()
     {
-        if (enemyType != Type.D && !isDead)
+        if (enemyType != Type.D && !isDead && isChase)
         {
-            float targetRadius = 0; // 구의 크기, 정확도, 정밀도
-            float targetRange = 0; // radius크기의 구체를 정한 방향으로 쏜 레이의 길이, 탐색도, 범위
+            float targetRadius = 0;
+            float targetRange = 0;
 
             switch (enemyType)
             {
@@ -197,70 +217,77 @@ public class Enemy : MonoBehaviour
                     break;
             }
 
-            RaycastHit[] rayHits = //플레이어를 추적하는 도중 공격범위에 플레이어를 포착
-                Physics.SphereCastAll(transform.position, targetRadius,
-                    transform.forward, targetRange, LayerMask.GetMask("Player"));
+            RaycastHit[] rayHits =
+                Physics.SphereCastAll(transform.position, targetRadius, transform.forward, targetRange, LayerMask.GetMask("Player"));
 
-            if (rayHits.Length > 0 && !isAttack) // 공격중이 아닌데 타케팅범위안에 플레이어가 들어왔다.
-            {
+            if (rayHits.Length > 0 && !isAttack)
                 StartCoroutine("Attack");
-            }
+                
         }
     }
 
     IEnumerator Attack()
     {
-        isChase = false; // 쫓는거 멈추기
-        isAttack = true; // 공격 하자
-        _animator.SetBool("isAttack", true); // 애니메이션
+        
+        isChase = false;
+        isAttack = true;
+        _animator.SetBool("isAttack", true);
+        _isWandering = false;
 
         switch (enemyType)
         {
             case Type.A:
-                yield return new WaitForSeconds(0.2f); // 공격 모션 딜레이
-                _meleeArea.enabled = true; // 0.2초후 콜라이더 활성화하여 공격범위 만들어서 공격
-                
-                yield return new WaitForSeconds(1f); // 공격 끝나고 1초 동안 제자리 대기
-                _meleeArea.enabled = false; // 범위 끄기
-                
-                yield return new WaitForSeconds(1f); // 공격, 공격 범위 끄고 1초 대기
+                yield return new WaitForSeconds(0.2f);
+                meleeArea.enabled = true;
+
+                yield return new WaitForSeconds(1f);
+                meleeArea.enabled = false;
+
+                yield return new WaitForSeconds(1f);
                 break;
             case Type.B:
-                yield return new WaitForSeconds(0.1f);
+                yield return new WaitForSeconds(1f);
                 _rigidbody.AddForce(transform.forward * 20, ForceMode.Impulse);
-                _meleeArea.enabled = true;
-                
-                yield return new WaitForSeconds(0.5f);
+                meleeArea.enabled = true;
+
+                yield return new WaitForSeconds(2f);
                 _rigidbody.velocity = Vector3.zero;
-                _meleeArea.enabled = false;
-                
+                meleeArea.enabled = false;
+
                 yield return new WaitForSeconds(2f);
                 break;
             case Type.C:
-                yield return new WaitForSeconds(0.5f); // 발사 준비 동작
+                yield return new WaitForSeconds(0.5f);
                 GameObject instantBullet = Instantiate(bullet, transform.position, transform.rotation);
                 Rigidbody rigidBullet = instantBullet.GetComponent<Rigidbody>();
-                rigidBullet.velocity = transform.forward * 20; // add포스 해도 된다.
+                rigidBullet.velocity = transform.forward * 20;
 
-                yield return new WaitForSeconds(2f); // 2초 후 다시 움직이도록 
+                yield return new WaitForSeconds(2f);
                 break;
         }
+
+        isChase = true;
+        isAttack = false;
+        _animator.SetBool("isAttack", false);
         
-        isChase = true; // 다시 쫒아가기
-        isAttack = false; // 공격은 끄기
-        _animator.SetBool("isAttack", false); // 공격애니메이션 끄기
+
     }
-    
-    /* -------------- 피격관련 -------------- */
+
+    /* -------------- 피격관련 변수 -------------- */
     void OnTriggerEnter(Collider other)
     {
+        if (other.CompareTag("Player"))
+        {
+            // 플레이어와 충돌했을 때의 처리
+            SetTarget(other.transform);
+        }
+
         if (other.tag == "Melee")
         {
             Weapon weapon = other.GetComponent<Weapon>();
             curHealth -= weapon.damage;
             Vector3 reactVec = transform.position - other.transform.position;
             StartCoroutine(OnDamage(reactVec, false));
-
         }
         else if (other.tag == "Bullet")
         {
@@ -269,35 +296,33 @@ public class Enemy : MonoBehaviour
             Vector3 reactVec = transform.position - other.transform.position;
             Destroy(other.gameObject);
             StartCoroutine(OnDamage(reactVec, false));
-
         }
     }
-
 
     public void HitByGrenade(Vector3 explosionPos)
     {
         curHealth -= 100;
         Vector3 reactVec = transform.position - explosionPos;
-        
         StartCoroutine(OnDamage(reactVec, true));
     }
 
     IEnumerator OnDamage(Vector3 reactVec, bool isGrenade)
     {
-        foreach (MeshRenderer mesh in _meshs)
+        foreach (MeshRenderer mesh in _meshRenderers)
             mesh.material.color = Color.red;
 
         yield return new WaitForSeconds(0.1f);
 
         if (curHealth > 0)
         {
-            foreach (MeshRenderer mesh in _meshs)
+            foreach (MeshRenderer mesh in _meshRenderers)
                 mesh.material.color = Color.white;
         }
         else
         {
-            foreach (MeshRenderer mesh in _meshs)
+            foreach (MeshRenderer mesh in _meshRenderers)
                 mesh.material.color = Color.gray;
+
             gameObject.layer = 14;
             isDead = true;
             isChase = false;
@@ -325,7 +350,7 @@ public class Enemy : MonoBehaviour
                     manager.enemyCntD--;
                     break;
             }
-            
+
             if (isGrenade)
             {
                 reactVec = reactVec.normalized;
@@ -341,13 +366,17 @@ public class Enemy : MonoBehaviour
                 reactVec += Vector3.up;
                 _rigidbody.AddForce(reactVec * 5, ForceMode.Impulse);
             }
+
             Destroy(gameObject, 4);
         }
     }
-    // --------------------------- 외부 참조 함수 ------------------------
+
+    /* -------------- 외부참조 함수 -------------- */
     public void SetIsNavEnabled(bool bol)
     {
         isChase = bol;
         _nav.enabled = bol;
     }
+
+    
 }

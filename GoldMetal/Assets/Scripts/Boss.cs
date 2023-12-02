@@ -6,14 +6,21 @@ using Random = UnityEngine.Random;
 public class Boss : Enemy
 {
 
-   /* --------------  프로퍼티 -------------- */
+   /* --------------- 보스변수 ---------------- */
    public GameObject missile;
    public Transform missilePortA;
    public Transform missilePortB;
 
-/* -------------- enemy 프로퍼티 -------------- */
-   // 플레이어 이동 예측
-   Vector3 lookVec;
+   protected Rigidbody2D rigid;
+   protected Animator anim;
+   protected SpriteRenderer spriteRenderer;
+   protected BoxCollider2D _meleeArea;
+   protected MeshRenderer[] _meshs;
+
+
+    /* ------------------- enemy ------------------ */
+    // 플레이어 이동 예측
+    Vector3 lookVec;
    // 어디에 내려 찍을지 저장하는 변수
    Vector3 tauntVec;
    
